@@ -1,20 +1,24 @@
 FROM odoo:17.0
 
-ARG LOCALE=en_US.UTF-8
+USER root
 
-ENV LANGUAGE=${LOCALE}
-ENV LC_ALL=${LOCALE}
-ENV LANG=${LOCALE}
+# Instalar dependencias opcionales
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    locales \
+    && locale-gen en_US.UTF-8
 
-USER 0
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
-RUN apt-get -y update && apt-get install -y --no-install-recommends locales netcat-openbsd \
-    && locale-gen ${LOCALE}
+# Crear carpeta de addons personalizados (opcional)
+RUN mkdir -p /mnt/extra-addons
+RUN chown -R odoo:odoo /mnt/extra-addons
 
-WORKDIR /app
+# Exponer el puerto correcto
+EXPOSE 8069
 
-COPY --chmod=755 entrypoint.sh ./
+# Comando de arranque REAL de Odoo
+ENTRYPOINT ["/usr/bin/odoo"]
 
-ENTRYPOINT ["/bin/sh"]
-
-CMD ["entrypoint.sh"]
+CMD ["-c", "/etc/odoo/odoo.conf"]
